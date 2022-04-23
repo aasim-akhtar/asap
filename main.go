@@ -42,10 +42,10 @@ func home(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("Content-Type","text/html")
 
 	// Inistanciate a new View
-	homeView = views.NewView("views/home.html")
+	homeView = views.NewView("container","views/home.html")
 
-	// Renders the template from View.Template
-	err := homeView.Template.Execute(w,nil)
+	// Renders the template from views.View object
+	err := homeView.Template.ExecuteTemplate(w,homeView.Layout,nil)
 	if err != nil {
 		panic(err)
 	}
@@ -54,7 +54,7 @@ func home(w http.ResponseWriter, r *http.Request){
 func contribute (w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type","text/html")
 
-	contributeView = views.NewView()
+	contributeView = views.NewView("container")
 
 	err := contributeView.Template.Execute(w,nil)
 	if err != nil {
