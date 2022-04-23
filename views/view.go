@@ -2,12 +2,13 @@ package views
 
 import (
 	"html/template"
+	"net/http"
+	"os"
 	"path/filepath"
 )
 
 var (
-	// @TODO use filepath.Join("views","layouts") with a trailing slash
-	LayoutDir string = "views/layouts/"
+	LayoutDir string = filepath.Join("views","layouts") + string(os.PathSeparator)
 	TemplateExt string = "*.html"
 )
 
@@ -30,6 +31,12 @@ func NewView (layout string, files ...string) *View {
 type View struct {
 	Template *template.Template
 	Layout string
+}
+
+// Render is used to render the view with the predefined layout.
+func (v *View) Render(w http.ResponseWriter, r *http.Request, data interface{}) error {
+	w.Header().Set("Content-Type", "text/html")
+	return v.Template.ExecuteTemplate(w, v.Layout, data)
 }
 
 // layoutFiles returns a slice of strings representing

@@ -13,6 +13,7 @@ import (
 
 	"github.com/aasimakhtar/apktools/views"
 	"github.com/gorilla/mux"
+	"golang.org/x/tools/go/analysis/passes/nilfunc"
 )
 
 var (
@@ -39,29 +40,26 @@ func startServer() {
 }
 
 func home(w http.ResponseWriter, r *http.Request){
-	w.Header().Set("Content-Type","text/html")
 
 	// Inistanciate a new View
 	homeView = views.NewView("container","views/home.html")
 
 	// Renders the template from views.View object
-	err := homeView.Template.ExecuteTemplate(w,homeView.Layout,nil)
+	must(homeView.Render(w, r, nil))
+}
+
+func contribute (w http.ResponseWriter, r *http.Request) {
+
+	contributeView = views.NewView("container")
+
+	must(contributeView.Render(w, r, nil))
+}	
+
+func must(err error) {
 	if err != nil {
 		panic(err)
 	}
 }
-
-func contribute (w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type","text/html")
-
-	contributeView = views.NewView("container")
-
-	err := contributeView.Template.Execute(w,nil)
-	if err != nil {
-		panic(err)
-	}
-}	
-
 
 func dummyApkTool(w http.ResponseWriter, r *http.Request) {
 	if _, err := os.Stat("tools/Voice_Recorder_v54.1_apkpure.com"); !os.IsNotExist(err) {
