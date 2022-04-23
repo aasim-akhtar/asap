@@ -13,7 +13,6 @@ import (
 
 	"github.com/aasimakhtar/apktools/views"
 	"github.com/gorilla/mux"
-	"golang.org/x/tools/go/analysis/passes/nilfunc"
 )
 
 var (
