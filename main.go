@@ -11,7 +11,13 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/aasimakhtar/apktools/views"
 	"github.com/gorilla/mux"
+)
+
+var (
+	homeView *views.View
+	contributeView *views.View
 )
 
 func main() {
@@ -22,6 +28,8 @@ func main() {
 func startServer() {
 	r := mux.NewRouter()
 
+	r.HandleFunc("/",home)
+	r.HandleFunc("/contribute",contribute)
 	r.HandleFunc("/api/fileupload", fileUpload).Methods("POST")
 	r.HandleFunc("/api/apktool", rest_apktool).Methods("POST")
 	r.HandleFunc("/api/dummyapktool",dummyApkTool).Methods("POST")
@@ -29,6 +37,31 @@ func startServer() {
 	fmt.Println("SERVER STARTED AT PORT 8000")
 	log.Fatal(http.ListenAndServe(":8000", r))
 }
+
+func home(w http.ResponseWriter, r *http.Request){
+	w.Header().Set("Content-Type","text/html")
+
+	// Inistanciate a new View
+	homeView = views.NewView("views/home.html")
+
+	// Renders the template from View.Template
+	err := homeView.Template.Execute(w,nil)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func contribute (w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type","text/html")
+
+	contributeView = views.NewView()
+
+	err := contributeView.Template.Execute(w,nil)
+	if err != nil {
+		panic(err)
+	}
+}	
+
 
 func dummyApkTool(w http.ResponseWriter, r *http.Request) {
 	if _, err := os.Stat("tools/Voice_Recorder_v54.1_apkpure.com"); !os.IsNotExist(err) {
