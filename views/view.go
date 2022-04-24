@@ -8,11 +8,11 @@ import (
 )
 
 var (
-	LayoutDir string = filepath.Join("views","layouts") + string(os.PathSeparator)
+	LayoutDir   string = filepath.Join("views", "layouts") + string(os.PathSeparator)
 	TemplateExt string = "*.html"
 )
 
-func NewView (layout string, files ...string) *View {
+func NewView(layout string, files ...string) *View {
 
 	files = append(files, layoutFiles()...)
 
@@ -23,14 +23,14 @@ func NewView (layout string, files ...string) *View {
 
 	return &View{
 		Template: template,
-		Layout : layout,
+		Layout:   layout,
 	}
 }
 
 // View struct contains pointer to a Template that produces a safe HTML document fragment.
 type View struct {
 	Template *template.Template
-	Layout string
+	Layout   string
 }
 
 // Render is used to render the view with the predefined layout.
