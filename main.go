@@ -34,6 +34,7 @@ func startServer() {
 	r.HandleFunc("/api/fileupload", fileUpload).Methods("POST")
 	r.HandleFunc("/api/apktool", rest_apktool).Methods("POST")
 	r.HandleFunc("/api/enjarify", rest_enjarify).Methods("POST")
+	r.HandleFunc("/api/jadx",rest_jadx).Methods("POST")
 	r.HandleFunc("/api/dummyapktool",dummyApkTool).Methods("POST")
 
 	// Assests Images
@@ -176,9 +177,23 @@ func rest_enjarify(w http.ResponseWriter, r *http.Request){
 	fmt.Println(enjarify)
 
 	enjarify.Execute()
-	
-	
+}
 
+func rest_jadx(w http.ResponseWriter, r *http.Request)  {
+
+	fileName,err := uploadHandler(w,r)
+	if err != nil {
+		fmt.Fprintf(w,"File creation failed")
+		return
+	}
+
+	fmt.Fprintf(w,"File Uploaded Sucessfully\n")
+
+	jadx := tools.NewTool("jadx",fileName)
+
+	fmt.Println(jadx)
+
+	jadx.Execute()
 }
 
 func uploadHandler (w http.ResponseWriter, r *http.Request) (string , error){
@@ -242,7 +257,8 @@ func apktool(f string,w http.ResponseWriter) {
 	// Path to where the tools are stored.
 	// path := "tools"
 
-	dir := filepath.Join("Decompiled Files")
+	dir := filepath.Join(tools.ProcessedData,f,"apktool")
+	tools.Mkdir(dir)
 	// os.MkdirAll(dir,0444)
 	// Constructing folder name to store apktool output
 	SRC_DIR := f + "_src"
@@ -254,10 +270,13 @@ func apktool(f string,w http.ResponseWriter) {
 	}
 	fmt.Println(f)
 
+	// Contains path to apk file
+	apkPath :=  filepath.Join("..","..","..","apk",f)
+
 	// CMD 1
 	// cmd := "java -jar apktool.jar d ../" + f.Name() + " -o " + SRC_DIR
 	// cmd := "java"
-	args := "d " + filepath.Join("..", "apk", f) + " -o " + SRC_DIR
+	args := "d " + apkPath + " -o " + SRC_DIR
 	// argsSlice := strings.Split(args," ")
 	// CMD 2 , can also run with this instead of CMD 1
 	// cmd := "apktool.bat d ../" + f.Name() + " -o " + SRC_DIR
