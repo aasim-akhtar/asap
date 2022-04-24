@@ -1,7 +1,10 @@
 package main
 
 import (
+	"archive/zip"
+	"bytes"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -24,7 +27,7 @@ func startServer() {
 
 	r.HandleFunc("/api/fileupload", fileUpload).Methods("POST")
 	r.HandleFunc("/api/apktool", rest_apktool).Methods("POST")
-	r.HandleFunc("/api/dummyapktool",dummyApkTool).Methods("POST")
+	r.HandleFunc("/api/dummyapktool", dummyApkTool).Methods("POST")
 
 	fmt.Println("SERVER STARTED AT PORT 8000")
 	log.Fatal(http.ListenAndServe(":8000", r))
@@ -61,7 +64,7 @@ func dummyApkTool(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("apktool completion error", err)
 	}
 	fmt.Println("Reached End of Command")
-	fmt.Fprintf(w,"Task Completed Sucessfully")
+	fmt.Fprintf(w, "Task Completed Sucessfully")
 }
 
 func fileUpload(w http.ResponseWriter, r *http.Request) {
@@ -101,31 +104,31 @@ func fileUpload(w http.ResponseWriter, r *http.Request) {
 
 func rest_apktool(w http.ResponseWriter, r *http.Request) {
 
-	file,err := uploadHandler(w,r)
+	file, err := uploadHandler(w, r)
 	if err != nil {
-		fmt.Fprintf(w,"File creation failed")
+		fmt.Fprintf(w, "File creation failed")
 		return
 	}
 
 	fmt.Println(file.Name())
-	fmt.Fprintf(w,"File Uploaded Sucessfully\n")
+	fmt.Fprintf(w, "File Uploaded Sucessfully\n")
 
 	if runtime.GOOS == "linux" {
 		if !isApk("apk", file.Name()) {
 			fmt.Println(file.Name(), "is not an apk file!")
 			os.RemoveAll(filepath.Join("apk", file.Name()))
 			return
-		}		
+		}
 	}
 
-	apktool(file,w)
+	apktool(file.Name(), w, r)
 	// w.Header().Set("Content-Type","application/zip")
 	// w.Write(archive(file.Name()))
-	fmt.Fprintf(w,"Task Completed Sucessfully\n")
+	fmt.Fprintf(w, "Task Completed Sucessfully\n")
 
 }
 
-func uploadHandler (w http.ResponseWriter, r *http.Request) (*os.File , error){
+func uploadHandler(w http.ResponseWriter, r *http.Request) (*os.File, error) {
 	// filepath to store apk
 	fPath := "apk"
 	os.Chdir(fPath)
@@ -157,30 +160,30 @@ func uploadHandler (w http.ResponseWriter, r *http.Request) (*os.File , error){
 	// fPath = filepath.Join(fPath, handler.Filename)
 	// @TODO
 	// checkFile()
-	f, err := os.OpenFile(handler.Filename, os.O_RDWR | os.O_CREATE, 0666)
+	f, err := os.OpenFile(handler.Filename, os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
-		fmt.Fprintf(w,"Error creating file %s",err)
+		fmt.Fprintf(w, "Error creating file %s", err)
 		return nil, err
 	}
 	defer f.Close()
 
-	_,err = f.Write(fileBytes)
+	_, err = f.Write(fileBytes)
 
 	if err != nil {
-		fmt.Fprintf(w,"Error Writing to file %s",err)
+		fmt.Fprintf(w, "Error Writing to file %s", err)
 		return nil, err
 	}
 	os.Chdir("..")
 	return f, err
-} 
+}
 
 // deprecated commmand example
 // java -jar apktool.jar d ../../../apk/Voice_Recorder_v54.1_apkpure.com.apk
 
 // apktool
-func apktool(f *os.File,w http.ResponseWriter) {
+func apktool(f string, w http.ResponseWriter, r *http.Request ) {
 	// @TODO f.Name() already contains path eg: "apk/myUploadedFile.apk".
-	// Path where apk files are stored. 
+	// Path where apk files are stored.
 	// apk_path := "apk"
 
 	// Path to where the tools are stored.
@@ -189,55 +192,59 @@ func apktool(f *os.File,w http.ResponseWriter) {
 	dir := filepath.Join("Decompiled Files")
 	// os.MkdirAll(dir,0444)
 	// Constructing folder name to store apktool output
-	SRC_DIR := f.Name() + "_src"
+	SRC_DIR := f + "_src"
 
 	// Deletes if folder already exists, apktool fails if the folder exists
 	err := checkFolder(dir, SRC_DIR)
 	if err != nil {
 		fmt.Println("Error deleting folder", err)
 	}
-	fmt.Println(f.Name())
+	fmt.Println(f)
 
 	// CMD 1
-	// cmd := "java -jar apktool.jar d ../" + f.Name() + " -o " + SRC_DIR
+	// cmd := "java -jar apktool.jar d ../" + f + " -o " + SRC_DIR
 	// cmd := "java"
-	args := "d " + filepath.Join("..", "apk", f.Name()) + " -o " + SRC_DIR
+	args := "d " + filepath.Join("..", "apk", f) + " -o " + SRC_DIR
 	// argsSlice := strings.Split(args," ")
 	// CMD 2 , can also run with this instead of CMD 1
-	// cmd := "apktool.bat d ../" + f.Name() + " -o " + SRC_DIR
-	
+	// cmd := "apktool.bat d ../" + f + " -o " + SRC_DIR
+
 	var cmdStruct *exec.Cmd
 	if runtime.GOOS == "windows" {
 		// @TODO fix windows cmd
-		cmdStruct = exec.Command("apktool",strings.Split(args, " ")...)
+		cmdStruct = exec.Command("apktool", strings.Split(args, " ")...)
 	}
 	if runtime.GOOS == "linux" {
 		cmdStruct = exec.Command("apktool", strings.Split(args, " ")...)
-	 
+
 	}
 
 	// In case of CMD 1, without the cmdStruct.Dir = path, cmdStruct.Wait() returns: "Error: Unable to access jarfile apktool.jar"
 	// In case of CMD 2, without the cmdStruct.Dir = path, cmdStruct.Stderr [afaik] returns: "Input file (../apk\myUploadedFile.apk) was not found or was not readable."
-	
+
 	/*CMD 2 command COULD ALSO be ran by doing the following changes:
-From cmd remove "../" and set cmdStruct.Dir= apk_path i.e. to "apk"
-From cmd remove f.Name() and hardcode the filename, this is because f.Name() returns "apk/myUploadedFile.apk" instead of "myUploadedFile.apk"*/
+	From cmd remove "../" and set cmdStruct.Dir= apk_path i.e. to "apk"
+	From cmd remove f.Name() and hardcode the filename, this is because f.Name() returns "apk/myUploadedFile.apk" instead of "myUploadedFile.apk"*/
 	cmdStruct.Dir = dir
-	// cmdStruct.Path = path
+	// cmdStruct.Path = "tools/apktool.bat"
 	fmt.Println(cmdStruct.Args)
 	fmt.Println(os.Getwd())
 	// Connecting Output and Error to commandline
-	cmdStruct.Stdout = os.Stdout
-	cmdStruct.Stderr = os.Stderr
+	// cmdStruct.Stdout = os.Stdout
+	// cmdStruct.Stderr = os.Stderr
+
+	var stdoutBuf, stderrBuf bytes.Buffer
+
+	cmdStruct.Stdout = io.MultiWriter( w, &stdoutBuf )
+	cmdStruct.Stderr = io.MultiWriter(os.Stderr, &stderrBuf)
 
 	err = cmdStruct.Start()
+
 	if err != nil {
 		fmt.Println("Unable to start apktool", err)
 		return
 	}
 	fmt.Println(os.Getwd())
-
-	// fmt.Println(string(out))
 
 	err = cmdStruct.Wait()
 	if err != nil {
@@ -245,18 +252,68 @@ From cmd remove f.Name() and hardcode the filename, this is because f.Name() ret
 	}
 	fmt.Println("Reached End of Command")
 
+	// create zip
+	fmt.Println("Creating Zip")
+
+	os.Chdir("zipped")
+
+	zipFile, err := os.Create( f+".zip" )
+	
+	if err != nil{
+		fmt.Println("Zip Create err",err)
+		return
+	}
+	defer zipFile.Close()
+
+	// path := "Decompiled Files/"+f+"_src"
+
+	os.Chdir("../Decompiled Files")
+	wd, _ := os.Getwd()
+	fmt.Println("Current Working Dir:",wd)
+
+	// print files in console
+	files, _ := ioutil.ReadDir(wd+"/"+f+"_src")
+	fmt.Println("File List:")
+	for _, file := range files {
+		fmt.Println( "File:", file.Name(), file.IsDir() )
+	}
+
+	folder, err := os.Open(wd+"/"+f+"_src")
+
+	if err != nil {
+		fmt.Println("Folder Handle Err:",err)
+		return
+	}
+	defer folder.Close()
+
+	zipwriter := zip.NewWriter( zipFile )
+
+	// add everything to zip
+	write, err := zipwriter.Create(f+"_src")
+
+	if err != nil {
+		fmt.Println("Zip write err:",err)
+		return
+	}
+
+	// looks like its saying "folder" handle is invalid :( maybe coz of changing cwd?
+	_, err = io.Copy(write, folder)
+	if err != nil {
+		fmt.Println("Zip Copy err:",err)
+		return
+	}
 }
 
-func archive (f string) ([]byte) {
+func archive(f string) []byte {
 	fmt.Println("Adding file to archive")
 	fmt.Println(f)
-	p :=  f + "_src/"
-	cmdStruct := exec.Command("tools/7z.exe","a",p)
+	p := f + "_src/"
+	cmdStruct := exec.Command("tools/7z.exe", "a", p)
 	cmdStruct.Stdout = os.Stdout
 	cmdStruct.Stderr = os.Stderr
 	err := cmdStruct.Start()
 	if err != nil {
-		fmt.Println("Error adding to archive",err)
+		fmt.Println("Error adding to archive", err)
 	}
 	err = cmdStruct.Wait()
 	if err != nil {
@@ -266,37 +323,37 @@ func archive (f string) ([]byte) {
 
 }
 
-func checkFolder (path string,f string) error{
-	c := filepath.Join(path,f)
-	fmt.Println("Filepath:",c)
+func checkFolder(path string, f string) error {
+	c := filepath.Join(path, f)
+	fmt.Println("Filepath:", c)
 	if _, err := os.Stat(c); !os.IsNotExist(err) {
 		// path/to/whatever exists
 		fmt.Println("Deleting existing Decoded files")
-		if runtime.GOOS == "windows"{
-			_,err = exec.Command("cmd.exe", "/c", "rmdir", "/q", "/s", c).Output()
+		if runtime.GOOS == "windows" {
+			_, err = exec.Command("cmd.exe", "/c", "rmdir", "/q", "/s", c).Output()
 			return err
-		}else{
-			_,err = exec.Command("rm","-rf",c).Output()
+		} else {
+			_, err = exec.Command("rm", "-rf", c).Output()
 			return err
 		}
 	}
 	return nil
 	// err := os.Link(src, dst)
-    // if err != nil {
-    //     return err
-    // }
+	// if err != nil {
+	//     return err
+	// }
 
-    // return os.Remove(src)
+	// return os.Remove(src)
 }
 
 func isApk(path string, f string) bool {
-// @TODO
+	// @TODO
 	// file path/filename | grep Zip
 	cmd, err := exec.Command("file", strings.Split(filepath.Join(path, f)+"| grep -q Zip", " ")...).Output()
 	if err != nil {
-		fmt.Println("Error validating apk",err)
-}
+		fmt.Println("Error validating apk", err)
+	}
 
 	fmt.Println(string(cmd))
-	return strings.Contains(string(cmd),"zip")
+	return strings.Contains(string(cmd), "zip")
 }
