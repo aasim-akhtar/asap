@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	homeView *views.View
+	homeView       *views.View
 	contributeView *views.View
 )
 
@@ -29,12 +29,12 @@ func main() {
 func startServer() {
 	r := mux.NewRouter()
 
-	r.HandleFunc("/",home)
-	r.HandleFunc("/contribute",contribute)
+	r.HandleFunc("/", home)
+	r.HandleFunc("/contribute", contribute)
 	r.HandleFunc("/api/fileupload", fileUpload).Methods("POST")
 	r.HandleFunc("/api/apktool", rest_apktool).Methods("POST")
 	r.HandleFunc("/api/enjarify", rest_enjarify).Methods("POST")
-	r.HandleFunc("/api/dummyapktool",dummyApkTool).Methods("POST")
+	r.HandleFunc("/api/dummyapktool", dummyApkTool).Methods("POST")
 
 	// Assests Images
 	imageHandler := http.FileServer(http.Dir("./assets/images/"))
@@ -44,21 +44,21 @@ func startServer() {
 	log.Fatal(http.ListenAndServe(":8000", r))
 }
 
-func home(w http.ResponseWriter, r *http.Request){
+func home(w http.ResponseWriter, r *http.Request) {
 
 	// Inistanciate a new View
-	homeView = views.NewView("container","views/home.html")
+	homeView = views.NewView("container", "views/home.html")
 
 	// Renders the template from views.View object
 	must(homeView.Render(w, r, nil))
 }
 
-func contribute (w http.ResponseWriter, r *http.Request) {
+func contribute(w http.ResponseWriter, r *http.Request) {
 
 	contributeView = views.NewView("container")
 
 	must(contributeView.Render(w, r, nil))
-}	
+}
 
 func must(err error) {
 	if err != nil {
@@ -97,7 +97,7 @@ func dummyApkTool(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("apktool completion error", err)
 	}
 	fmt.Println("Reached End of Command")
-	fmt.Fprintf(w,"Task Completed Sucessfully")
+	fmt.Fprintf(w, "Task Completed Sucessfully")
 }
 
 func fileUpload(w http.ResponseWriter, r *http.Request) {
@@ -137,51 +137,49 @@ func fileUpload(w http.ResponseWriter, r *http.Request) {
 
 func rest_apktool(w http.ResponseWriter, r *http.Request) {
 
-	file,err := uploadHandler(w,r)
+	file, err := uploadHandler(w, r)
 	if err != nil {
-		fmt.Fprintf(w,"File creation failed")
+		fmt.Fprintf(w, "File creation failed")
 		return
 	}
 
 	fmt.Println(file)
-	fmt.Fprintf(w,"File Uploaded Sucessfully\n")
+	fmt.Fprintf(w, "File Uploaded Sucessfully\n")
 
 	if runtime.GOOS == "linux" {
 		if !isApk("apk", file) {
 			fmt.Println(file, "is not an apk file!")
 			os.RemoveAll(filepath.Join("apk", file))
 			return
-		}		
+		}
 	}
 
-	apktool(file,w)
+	apktool(file, w)
 	// w.Header().Set("Content-Type","application/zip")
 	// w.Write(archive(file.Name()))
-	fmt.Fprintf(w,"Task Completed Sucessfully\n")
+	fmt.Fprintf(w, "Task Completed Sucessfully\n")
 
 }
 
-func rest_enjarify(w http.ResponseWriter, r *http.Request){
+func rest_enjarify(w http.ResponseWriter, r *http.Request) {
 
-	fileName,err := uploadHandler(w,r)
+	fileName, err := uploadHandler(w, r)
 	if err != nil {
-		fmt.Fprintf(w,"File creation failed")
+		fmt.Fprintf(w, "File creation failed")
 		return
 	}
 
-	fmt.Fprintf(w,"File Uploaded Sucessfully\n")
+	fmt.Fprintf(w, "File Uploaded Sucessfully\n")
 
-	enjarify := tools.NewTool("enjarify",fileName)
+	enjarify := tools.NewTool("enjarify", fileName)
 
 	fmt.Println(enjarify)
 
 	enjarify.Execute()
-	
-	
 
 }
 
-func uploadHandler (w http.ResponseWriter, r *http.Request) (string , error){
+func uploadHandler(w http.ResponseWriter, r *http.Request) (string, error) {
 	// filepath to store apk
 	fPath := "apk"
 	os.Chdir(fPath)
@@ -213,30 +211,30 @@ func uploadHandler (w http.ResponseWriter, r *http.Request) (string , error){
 	// fPath = filepath.Join(fPath, handler.Filename)
 	// @TODO
 	// checkFile()
-	f, err := os.OpenFile(handler.Filename, os.O_RDWR | os.O_CREATE, 0666)
+	f, err := os.OpenFile(handler.Filename, os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
-		fmt.Fprintf(w,"Error creating file %s",err)
+		fmt.Fprintf(w, "Error creating file %s", err)
 		return "", err
 	}
 	defer f.Close()
 
-	_,err = f.Write(fileBytes)
+	_, err = f.Write(fileBytes)
 
 	if err != nil {
-		fmt.Fprintf(w,"Error Writing to file %s",err)
+		fmt.Fprintf(w, "Error Writing to file %s", err)
 		return "", err
 	}
 	os.Chdir("..")
 	return f.Name(), err
-} 
+}
 
 // deprecated commmand example
 // java -jar apktool.jar d ../../../apk/Voice_Recorder_v54.1_apkpure.com.apk
 
 // apktool
-func apktool(f string,w http.ResponseWriter) {
+func apktool(f string, w http.ResponseWriter) {
 	// @TODO f.Name() already contains path eg: "apk/myUploadedFile.apk".
-	// Path where apk files are stored. 
+	// Path where apk files are stored.
 	// apk_path := "apk"
 
 	// Path to where the tools are stored.
@@ -261,23 +259,23 @@ func apktool(f string,w http.ResponseWriter) {
 	// argsSlice := strings.Split(args," ")
 	// CMD 2 , can also run with this instead of CMD 1
 	// cmd := "apktool.bat d ../" + f.Name() + " -o " + SRC_DIR
-	
+
 	var cmdStruct *exec.Cmd
 	if runtime.GOOS == "windows" {
 		// @TODO fix windows cmd
-		cmdStruct = exec.Command("apktool",strings.Split(args, " ")...)
+		cmdStruct = exec.Command("apktool", strings.Split(args, " ")...)
 	}
 	if runtime.GOOS == "linux" {
 		cmdStruct = exec.Command("apktool", strings.Split(args, " ")...)
-	 
+
 	}
 
 	// In case of CMD 1, without the cmdStruct.Dir = path, cmdStruct.Wait() returns: "Error: Unable to access jarfile apktool.jar"
 	// In case of CMD 2, without the cmdStruct.Dir = path, cmdStruct.Stderr [afaik] returns: "Input file (../apk\myUploadedFile.apk) was not found or was not readable."
-	
+
 	/*CMD 2 command COULD ALSO be ran by doing the following changes:
-From cmd remove "../" and set cmdStruct.Dir= apk_path i.e. to "apk"
-From cmd remove f.Name() and hardcode the filename, this is because f.Name() returns "apk/myUploadedFile.apk" instead of "myUploadedFile.apk"*/
+	From cmd remove "../" and set cmdStruct.Dir= apk_path i.e. to "apk"
+	From cmd remove f.Name() and hardcode the filename, this is because f.Name() returns "apk/myUploadedFile.apk" instead of "myUploadedFile.apk"*/
 	cmdStruct.Dir = dir
 	// cmdStruct.Path = path
 	fmt.Println(cmdStruct.Args)
@@ -303,16 +301,16 @@ From cmd remove f.Name() and hardcode the filename, this is because f.Name() ret
 
 }
 
-func archive (f string) ([]byte) {
+func archive(f string) []byte {
 	fmt.Println("Adding file to archive")
 	fmt.Println(f)
-	p :=  f + "_src/"
-	cmdStruct := exec.Command("tools/7z.exe","a",p)
+	p := f + "_src/"
+	cmdStruct := exec.Command("tools/7z.exe", "a", p)
 	cmdStruct.Stdout = os.Stdout
 	cmdStruct.Stderr = os.Stderr
 	err := cmdStruct.Start()
 	if err != nil {
-		fmt.Println("Error adding to archive",err)
+		fmt.Println("Error adding to archive", err)
 	}
 	err = cmdStruct.Wait()
 	if err != nil {
@@ -322,37 +320,37 @@ func archive (f string) ([]byte) {
 
 }
 
-func checkFolder (path string,f string) error{
-	c := filepath.Join(path,f)
-	fmt.Println("Filepath:",c)
+func checkFolder(path string, f string) error {
+	c := filepath.Join(path, f)
+	fmt.Println("Filepath:", c)
 	if _, err := os.Stat(c); !os.IsNotExist(err) {
 		// path/to/whatever exists
 		fmt.Println("Deleting existing Decoded files")
-		if runtime.GOOS == "windows"{
-			_,err = exec.Command("cmd.exe", "/c", "rmdir", "/q", "/s", c).Output()
+		if runtime.GOOS == "windows" {
+			_, err = exec.Command("cmd.exe", "/c", "rmdir", "/q", "/s", c).Output()
 			return err
-		}else{
-			_,err = exec.Command("rm","-rf",c).Output()
+		} else {
+			_, err = exec.Command("rm", "-rf", c).Output()
 			return err
 		}
 	}
 	return nil
 	// err := os.Link(src, dst)
-    // if err != nil {
-    //     return err
-    // }
+	// if err != nil {
+	//     return err
+	// }
 
-    // return os.Remove(src)
+	// return os.Remove(src)
 }
 
 func isApk(path string, f string) bool {
-// @TODO
+	// @TODO
 	// file path/filename | grep Zip
 	cmd, err := exec.Command("file", strings.Split(filepath.Join(path, f)+"| grep -q Zip", " ")...).Output()
 	if err != nil {
-		fmt.Println("Error validating apk",err)
-}
+		fmt.Println("Error validating apk", err)
+	}
 
 	fmt.Println(string(cmd))
-	return strings.Contains(string(cmd),"zip")
+	return strings.Contains(string(cmd), "zip")
 }
