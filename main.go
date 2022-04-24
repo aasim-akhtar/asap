@@ -11,6 +11,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/aasimakhtar/apktools/tools"
 	"github.com/aasimakhtar/apktools/views"
 	"github.com/gorilla/mux"
 )
@@ -32,6 +33,7 @@ func startServer() {
 	r.HandleFunc("/contribute",contribute)
 	r.HandleFunc("/api/fileupload", fileUpload).Methods("POST")
 	r.HandleFunc("/api/apktool", rest_apktool).Methods("POST")
+	r.HandleFunc("/api/enjarify", rest_enjarify).Methods("POST")
 	r.HandleFunc("/api/dummyapktool",dummyApkTool).Methods("POST")
 
 	fmt.Println("SERVER STARTED AT PORT 8000")
@@ -137,13 +139,13 @@ func rest_apktool(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println(file.Name())
+	fmt.Println(file)
 	fmt.Fprintf(w,"File Uploaded Sucessfully\n")
 
 	if runtime.GOOS == "linux" {
-		if !isApk("apk", file.Name()) {
-			fmt.Println(file.Name(), "is not an apk file!")
-			os.RemoveAll(filepath.Join("apk", file.Name()))
+		if !isApk("apk", file) {
+			fmt.Println(file, "is not an apk file!")
+			os.RemoveAll(filepath.Join("apk", file))
 			return
 		}		
 	}
@@ -155,7 +157,27 @@ func rest_apktool(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func uploadHandler (w http.ResponseWriter, r *http.Request) (*os.File , error){
+func rest_enjarify(w http.ResponseWriter, r *http.Request){
+
+	fileName,err := uploadHandler(w,r)
+	if err != nil {
+		fmt.Fprintf(w,"File creation failed")
+		return
+	}
+
+	fmt.Fprintf(w,"File Uploaded Sucessfully\n")
+
+	enjarify := tools.NewTool("enjarify",fileName)
+
+	fmt.Println(enjarify)
+
+	enjarify.Execute()
+	
+	
+
+}
+
+func uploadHandler (w http.ResponseWriter, r *http.Request) (string , error){
 	// filepath to store apk
 	fPath := "apk"
 	os.Chdir(fPath)
@@ -169,7 +191,7 @@ func uploadHandler (w http.ResponseWriter, r *http.Request) (*os.File , error){
 	file, handler, err := r.FormFile("apk")
 	if err != nil {
 		fmt.Fprintf(w, "Error Retrieving file %s", err)
-		return nil, err
+		return "", err
 	}
 	// fmt.Println("File: ", handler.Filename, "\nFile Size:", handler.Size, "\nMIME Header", handler.Header)
 
@@ -177,7 +199,7 @@ func uploadHandler (w http.ResponseWriter, r *http.Request) (*os.File , error){
 	fileBytes, err := ioutil.ReadAll(file)
 	if err != nil {
 		fmt.Println("Error Reading file", err)
-		return nil, err
+		return "", err
 	}
 
 	// Detect Content Type
@@ -190,7 +212,7 @@ func uploadHandler (w http.ResponseWriter, r *http.Request) (*os.File , error){
 	f, err := os.OpenFile(handler.Filename, os.O_RDWR | os.O_CREATE, 0666)
 	if err != nil {
 		fmt.Fprintf(w,"Error creating file %s",err)
-		return nil, err
+		return "", err
 	}
 	defer f.Close()
 
@@ -198,17 +220,17 @@ func uploadHandler (w http.ResponseWriter, r *http.Request) (*os.File , error){
 
 	if err != nil {
 		fmt.Fprintf(w,"Error Writing to file %s",err)
-		return nil, err
+		return "", err
 	}
 	os.Chdir("..")
-	return f, err
+	return f.Name(), err
 } 
 
 // deprecated commmand example
 // java -jar apktool.jar d ../../../apk/Voice_Recorder_v54.1_apkpure.com.apk
 
 // apktool
-func apktool(f *os.File,w http.ResponseWriter) {
+func apktool(f string,w http.ResponseWriter) {
 	// @TODO f.Name() already contains path eg: "apk/myUploadedFile.apk".
 	// Path where apk files are stored. 
 	// apk_path := "apk"
@@ -219,19 +241,19 @@ func apktool(f *os.File,w http.ResponseWriter) {
 	dir := filepath.Join("Decompiled Files")
 	// os.MkdirAll(dir,0444)
 	// Constructing folder name to store apktool output
-	SRC_DIR := f.Name() + "_src"
+	SRC_DIR := f + "_src"
 
 	// Deletes if folder already exists, apktool fails if the folder exists
 	err := checkFolder(dir, SRC_DIR)
 	if err != nil {
 		fmt.Println("Error deleting folder", err)
 	}
-	fmt.Println(f.Name())
+	fmt.Println(f)
 
 	// CMD 1
 	// cmd := "java -jar apktool.jar d ../" + f.Name() + " -o " + SRC_DIR
 	// cmd := "java"
-	args := "d " + filepath.Join("..", "apk", f.Name()) + " -o " + SRC_DIR
+	args := "d " + filepath.Join("..", "apk", f) + " -o " + SRC_DIR
 	// argsSlice := strings.Split(args," ")
 	// CMD 2 , can also run with this instead of CMD 1
 	// cmd := "apktool.bat d ../" + f.Name() + " -o " + SRC_DIR
