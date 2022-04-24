@@ -36,6 +36,10 @@ func startServer() {
 	r.HandleFunc("/api/enjarify", rest_enjarify).Methods("POST")
 	r.HandleFunc("/api/dummyapktool", dummyApkTool).Methods("POST")
 
+	// Assests Images
+	imageHandler := http.FileServer(http.Dir("./assets/images/"))
+	r.PathPrefix("/assets/images/").Handler(http.StripPrefix("/assets/images/", imageHandler))
+
 	fmt.Println("SERVER STARTED AT PORT 8000")
 	log.Fatal(http.ListenAndServe(":8000", r))
 }
