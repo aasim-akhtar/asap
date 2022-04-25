@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+
+    <title></title>
+</head>
+<style>
+    body {
+        height: 75vh;
+        margin-top: 80px;
+        margin-left: 400px;
+        background-size: cover;
+        font-family: sans-serif;
+        background-color: rgba(253, 253, 252, 0.404);
+    }
+    .div {
+        margin-top: 300px;
+        background-color: rgb(255, 255, 255);
+        width: 75%;
+        height: 300px;
+        align-self: center;
+        padding: 50px;
+        border: 5px #6610f2 solid;
+        border-radius: 11px;
+        
+    }
+    .meter {
+    box-sizing: content-box;
+    height: 20px; /* Can be anything */
+    position: relative;
+    margin: 60px 200px; /* Just for demo spacing */
+    background: rgb(230, 229, 229);
+    border-radius: 11px;
+    padding: 10px;
+    box-shadow: inset 0 -1px 1px rgba(255, 255, 255, 0.87);
+    }
+    .meter > span {
+    display: block;
+    height: 100%;
+    border-top-right-radius: 11px;
+    border-bottom-right-radius: 11px;
+    border-top-left-radius: 11px;
+    border-bottom-left-radius: 11px;
+    background-color: #6610f2;
+    background-image: linear-gradient(
+    center bottom,
+    #6610f2 37%,
+    #6f42c1 69%
+    );
+    box-shadow: inset 0 2px 9px rgba(255, 255, 255, 0.3),
+    inset 0 -2px 6px rgba(0, 0, 0, 0.4);
+    position: relative;
+    overflow: hidden;
+    }
+    .meter > span:after,
+    .animate > span > span {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    background-image: linear-gradient(
+    -45deg,
+    rgba(255, 255, 255, 0.2) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, 0.2) 75%,
+    transparent 75%,
+    transparent
+    );
+    z-index: 1;
+    background-size: 50px 50px;
+    animation: move 2s linear infinite;
+    border-top-right-radius:11px;
+    border-bottom-right-radius:11px;
+    border-top-left-radius: 11px;
+    border-bottom-left-radius: 11px;
+    overflow: hidden;
+    }
+
+    .animate > span:after {
+    display: none;
+    }
+
+    @keyframes move {
+    0% {
+    background-position: 0 0;
+    }
+    100% {
+    background-position: 50px 50px;
+    }
+    }
+</style>
+
+<body>
+    
+                <div class="div">
+                    <h2 style="text-align:center">Please Wait while the data is being processed...</h2>
+                    <div class="meter">
+                        <span style="width: 100%"></span>
+                    </div>
+                </div>
+                
+
+    <!-- Optional JavaScript -->
+    <script >
+        $(".meter > span").each(function () {
+        $(this)
+        .data("origWidth", $(this).width())
+        .width(0)
+        .animate(
+        {
+        width: $(this).data("origWidth")
+        },
+        1200
+        );
+        });
+    </script>
+
+   
+</body>
+
+</html>
