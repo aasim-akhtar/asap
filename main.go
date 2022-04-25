@@ -176,7 +176,7 @@ func rest_enjarify(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println(enjarify)
 
-	enjarify.Execute()
+	err = enjarify.Execute(w, r)
 }
 
 func rest_jadx(w http.ResponseWriter, r *http.Request) {
@@ -193,7 +193,7 @@ func rest_jadx(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println(jadx)
 
-	jadx.Execute()
+	jadx.Execute(w, r)
 }
 
 func uploadHandler(w http.ResponseWriter, r *http.Request) (string, error) {

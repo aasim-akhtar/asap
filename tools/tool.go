@@ -73,7 +73,9 @@ func enjarify(f string, w http.ResponseWriter) {
 // 	return filepath.Join(ProcessedData, t.tool, t.file)
 // }
 
-func (t *Tool) Execute() {
+func (t *Tool) Execute(w http.ResponseWriter, r *http.Request) error {
+
+	fmt.Fprintf(w, "Executing %s on %s\n", t.tool, t.file)
 	t.cmd.Dir = t.dir
 	t.cmd.Stdout = os.Stdout
 	t.cmd.Stderr = os.Stderr
@@ -91,7 +93,7 @@ func (t *Tool) Execute() {
 		fmt.Println("enjarify completion error", err)
 	}
 	fmt.Println("Reached End of Command")
-
+	return err
 }
 
 // Mkdir makes Output directory for tool to be executed.
