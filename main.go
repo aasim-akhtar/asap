@@ -46,7 +46,7 @@ func startServer() {
 
 func home(w http.ResponseWriter, r *http.Request) {
 
-	// Inistanciate a new View
+	// Instantiate a new View
 	homeView = views.NewView("container", "views/home.html")
 
 	// Renders the template from views.View object
@@ -97,12 +97,12 @@ func dummyApkTool(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("apktool completion error", err)
 	}
 	fmt.Println("Reached End of Command")
-	fmt.Fprintf(w, "Task Completed Sucessfully")
+	fmt.Fprintf(w, "Task Completed Successfully")
 }
 
 func fileUpload(w http.ResponseWriter, r *http.Request) {
 	fPath := "apk"
-	fmt.Fprintf(w, "Uploadig File\n")
+	fmt.Fprintf(w, "Uploading File\n")
 	// store received file
 	r.ParseMultipartForm(50 << 20)
 
@@ -130,7 +130,7 @@ func fileUpload(w http.ResponseWriter, r *http.Request) {
 
 	tempFile.Write(fileBytes)
 
-	fmt.Fprintf(w, "File Uploaded sucessfully\n")
+	fmt.Fprintf(w, "File Uploaded successfully\n")
 
 	// rest_apktool(tempFile)
 }
@@ -144,7 +144,7 @@ func rest_apktool(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Println(file)
-	fmt.Fprintf(w, "File Uploaded Sucessfully\n")
+	fmt.Fprintf(w, "File Uploaded Successfully\n")
 
 	if runtime.GOOS == "linux" {
 		if !isApk("apk", file) {
@@ -157,7 +157,7 @@ func rest_apktool(w http.ResponseWriter, r *http.Request) {
 	apktool(file, w)
 	// w.Header().Set("Content-Type","application/zip")
 	// w.Write(archive(file.Name()))
-	fmt.Fprintf(w, "Task Completed Sucessfully\n")
+	fmt.Fprintf(w, "Task Completed Successfully\n")
 
 }
 
@@ -169,7 +169,7 @@ func rest_enjarify(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintf(w, "File Uploaded Sucessfully\n")
+	fmt.Fprintf(w, "File Uploaded Successfully\n")
 
 	enjarify := tools.NewTool("enjarify", fileName)
 
