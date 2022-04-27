@@ -1,6 +1,5 @@
 apk/**
 
-tools/*
+# tools/*
 
-Decompiled Files/*
-zipped/*
+Decompiled Files/*/
