@@ -155,10 +155,12 @@ func rest_apktool(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	apktool(file, w)
+	err = apktool(file, w)
 	// w.Header().Set("Content-Type","application/zip")
 	// w.Write(archive(file.Name()))
-	fmt.Fprintf(w, "Task Completed Successfully\n")
+	if err != nil {
+		fmt.Fprintf(w, "Error Completing apktool")
+	}
 
 }
 
@@ -177,6 +179,9 @@ func rest_enjarify(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(enjarify)
 
 	err = enjarify.Execute(w, r)
+	if err != nil {
+		fmt.Fprintf(w, "Error Completing Enjarify")
+	}
 }
 
 func rest_jadx(w http.ResponseWriter, r *http.Request) {
@@ -193,7 +198,10 @@ func rest_jadx(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println(jadx)
 
-	jadx.Execute(w, r)
+	err = jadx.Execute(w, r)
+	if err != nil {
+		fmt.Fprintf(w, "Error Completing Jadx")
+	}
 }
 
 func uploadHandler(w http.ResponseWriter, r *http.Request) (string, error) {
@@ -249,7 +257,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) (string, error) {
 // java -jar apktool.jar d ../../../apk/Voice_Recorder_v54.1_apkpure.com.apk
 
 // apktool
-func apktool(f string, w http.ResponseWriter) {
+func apktool(f string, w http.ResponseWriter) error {
 	// @TODO f.Name() already contains path eg: "apk/myUploadedFile.apk".
 	// Path where apk files are stored.
 	// apk_path := "apk"
@@ -308,7 +316,7 @@ func apktool(f string, w http.ResponseWriter) {
 	err = cmdStruct.Start()
 	if err != nil {
 		fmt.Println("Unable to start apktool", err)
-		return
+		return err
 	}
 	fmt.Println(os.Getwd())
 
@@ -317,9 +325,10 @@ func apktool(f string, w http.ResponseWriter) {
 	err = cmdStruct.Wait()
 	if err != nil {
 		fmt.Println("apktool completion error", err)
+		return err
 	}
 	fmt.Println("Reached End of Command")
-
+	return nil
 }
 
 func archive(f string) []byte {
